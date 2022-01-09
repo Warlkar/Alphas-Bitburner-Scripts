@@ -12,15 +12,6 @@ export function getMaxRam(ns, currentRAM = 0) {
     return ns.getPurchasedServerMaxRam();
 }
 
-export function isRun(ns, processName, hostName = "home") {
-    let processList = [];
-    processList = ns.ps(hostName);
-    for (var process of processList) {
-        if (process.filename == processName) return true;
-    }
-    return false;
-}
-
 export async function main(ns) {
     ns.tprint("Start Autobuy and Autoupgrade Server ...");
     var pServers = ns.getPurchasedServers();
