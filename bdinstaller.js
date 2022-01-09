@@ -69,6 +69,9 @@ function recursiveScan(ns, parent, server, target, route) {
 
 export function sPrint(ns, msg = "", verbosity = 3, toast = 0) {
     switch(msg.split(" ", 1)[0].toLowerCase()) {
+        case "debug":
+            if (verbosity > 4) ns.tprint("ERROR " + msg.substring(msg.indexOf(" ") + 1));
+            break;
         case "error":
             if (verbosity > 3) ns.tprint(msg);
             break;
@@ -85,7 +88,8 @@ export function sPrint(ns, msg = "", verbosity = 3, toast = 0) {
             msg = "SUCCESS " + msg;
             ns.tprint(msg);
     }
-    if (toast) ns.toast(msg.substring(msg.indexOf(" ") + 1),msg.split(" ", 1)[0].toLowerCase(), toast);
+    if (toast && (msg.split(" ", 1)[0].toLowerCase() != "debug")) ns.toast(msg.substring(msg.indexOf(" ") + 1),msg.split(" ", 1)[0].toLowerCase(), toast);
+    else if (toast && verbosity > 4) ns.toast(msg.substring(msg.indexOf(" ") + 1), "error", toast);
     ns.print(msg);
 }
 
@@ -113,14 +117,14 @@ export async function main(ns) {
 	}
 
     if (options.limit > ns.getHackingLevel() || options.limit < 0) options.limit = ns.getHackingLevel();
-    let allServers = list_servers(ns);
-    allServers = allServers.filter(s => !ns.getServer(s).backdoorInstalled && (ns.hasRootAccess(s) || (ns.getServerRequiredHackingLevel(s) <= options.limit && getHackFileCount(ns) >= ns.getServerNumPortsRequired(s))));
+    let allServers = list_servers(ns).filter(s => !ns.getServer(s).backdoorInstalled && (ns.hasRootAccess(s) || (ns.getServerRequiredHackingLevel(s) <= options.limit && getHackFileCount(ns) >= ns.getServerNumPortsRequired(s))));
 
     if (allServers.length) {
         var startServer = ns.getCurrentServer();
-        sPrint(ns, "INFO Gefundene Server: "+varDumpArray(allServers, ", ").substring(2), options.verbosity, options.toastmsg);
+        sPrint(ns, "INFO found server: "+varDumpArray(allServers, ", ").substring(2), options.verbosity, options.toastmsg);
 
-        for(var target of allServers) {
+        while (allServers.length) {
+            var target = allServers.shift();
             let route = [];
             sPrint(ns, ns.vsprintf("INFO Go from \"%s\" to \"%s\"", [ns.getCurrentServer(), target]), options.verbosity, options.toastmsg);
             if (!ns.serverExists(target)) {
@@ -130,6 +134,7 @@ export async function main(ns) {
             recursiveScan(ns, '', ns.getCurrentServer(), target, route);
             for (const i in route) {
                 await ns.sleep(10);
+                sPrint(ns, ns.vsprintf("DEBUG jump from %s to %s", [ns.getCurrentServer(), route[i]]), options.verbosity, options.toastmsg);
                 await ns.connect(route[i]);
             }
             if (!ns.hasRootAccess(target)) {
@@ -139,6 +144,12 @@ export async function main(ns) {
             sPrint(ns, "INFO install backdoor now ...", options.verbosity, options.toastmsg);
             await ns.installBackdoor();
             sPrint(ns, "SUCCESS Backdoor installed!", options.verbosity, options.toastmsg);
+            let tmpNewServerList = list_servers(ns).filter(s => !ns.getServer(s).backdoorInstalled && (ns.hasRootAccess(s) || (ns.getServerRequiredHackingLevel(s) <= options.limit && getHackFileCount(ns) >= ns.getServerNumPortsRequired(s))));
+            let addedServer = tmpNewServerList.filter(s => !allServers.includes(s));
+            let deltedServer = allServers.filter(s => !tmpNewServerList.includes(s));
+            if (addedServer.length) sPrint(ns, "WARNING Serverlist has changed, new server added: "+varDumpArray(addedServer, ", ").substring(2), options.verbosity, options.toastmsg);
+            if (deltedServer.length) sPrint(ns, "WARNING Serverlist has changed, old server deleted: "+varDumpArray(deltedServer, ", ").substring(2), options.verbosity, options.toastmsg);
+            allServers = tmpNewServerList;
         }
         
         let route = [];
