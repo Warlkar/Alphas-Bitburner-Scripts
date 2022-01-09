@@ -31,7 +31,6 @@ export async function main(ns) {
                 if (!ns.serverExists(rndName)) {
                     ns.purchaseServer(rndName, getMaxRam(ns));
                     ns.tprint("Purchased First New Server!: " + rndName);
-                    if (!isRun(ns, "bdinstaller.js")) await ns.exec("bdinstaller.js", "home", 1, "--toastmsg", "5000");
                 }
                 pServers = ns.getPurchasedServers()
             }
@@ -46,7 +45,6 @@ export async function main(ns) {
                 if (!ns.serverExists(rndName)) {
                     ns.purchaseServer(rndName, getMaxRam(ns));
                     ns.tprint("Purchased New Server!: " + rndName);
-                    if (!isRun(ns, "bdinstaller.js")) await ns.exec("bdinstaller.js", "home", 1, "--toastmsg", "5000");
                 }
                 pServers = ns.getPurchasedServers().sort(function (a, b) { return ns.getServerMaxRam(a) - ns.getServerMaxRam(b); });
             }
@@ -55,12 +53,9 @@ export async function main(ns) {
             if (getMaxRam(ns, curRam)) {
                 let rndName = "pServ-" + getMaxRam(ns, curRam) + "-" + (1000000000+(Math.random() * 8999999999)).toFixed(0);
                 if (!ns.serverExists(rndName)) {
-                    await ns.kill("runner.js", "home");
                     while (!await ns.deleteServer(pServers[0])) { await ns.killall(pServers[0]); }
                     ns.purchaseServer(rndName, getMaxRam(ns, curRam));
                     ns.tprintf("Upgrade %s to %s", pServers[0], rndName);
-                    await ns.exec("runner.js", "home");
-                    if (!isRun(ns, "bdinstaller.js")) await ns.exec("bdinstaller.js", "home", 1, "--toastmsg", "5000");
                 }
                 pServers = ns.getPurchasedServers().sort(function (a, b) { return ns.getServerMaxRam(a) - ns.getServerMaxRam(b); });
             }
