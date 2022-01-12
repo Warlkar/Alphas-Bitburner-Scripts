@@ -14,7 +14,7 @@ export async function main(ns) {
     }
     if (sLVL > 0) {
         if (sLVL > 2) {
-            while(!ns.fileExists("NUKE.exe", "home") || !ns.fileExists("b1t_flum3.exe", "home") || !ns.fileExists("fl1ght.exe", "home")) {
+            while(!ns.fileExists("NUKE.exe", "home") || !ns.fileExists("b1t_flum3.exe", "home")) {
                 if (!ns.isBusy()) {
                     if (!ns.fileExists("NUKE.exe", "home")) {
                         ns.tprint("WARN Auto Create missing NUKE.exe!");
